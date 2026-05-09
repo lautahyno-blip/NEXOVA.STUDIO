@@ -1,6 +1,7 @@
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import { doc, getDoc } from 'firebase/firestore';
-import { db } from '../lib/firebase';
+import { signInAnonymously } from 'firebase/auth';
+import { db, auth } from '../lib/firebase';
 import { toast } from 'react-hot-toast';
 
 interface AuthContextType {
@@ -26,6 +27,12 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     if (savedAdmin === 'true') {
       setIsAdmin(true);
     }
+
+    // Attempt anonymous sign-in for security rules (Site needs read access)
+    signInAnonymously(auth).catch(err => {
+      console.warn('Anonymous auth failed. Check Firebase console to enable it.', err);
+    });
+
     setLoading(false);
   }, []);
 

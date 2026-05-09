@@ -25,17 +25,39 @@
       },
       "required": ["title", "description", "iconName", "order"]
     },
-    "Message": {
-      "title": "Client Message",
-      "description": "A message sent by a potential client via the contact form",
+    "Order": {
+      "title": "Project Order",
+      "description": "A project request submitted by a client",
+      "type": "object",
+      "properties": {
+        "fullName": { "type": "string" },
+        "email": { "type": "string" },
+        "socialMedia": { "type": "string" },
+        "serviceType": { "type": "string" },
+        "projectTitle": { "type": "string" },
+        "projectDetails": { "type": "string" },
+        "budgetRange": { "type": "string" },
+        "deadline": { "type": "string" },
+        "referenceUrl": { "type": "string" },
+        "preferredComm": { "type": "string" },
+        "paymentProof": { "type": "string" },
+        "paymentStatus": { "type": "string" },
+        "status": { "type": "string" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["fullName", "email", "serviceType", "projectTitle", "projectDetails", "createdAt"]
+    },
+    "Feedback": {
+      "title": "Client Feedback",
+      "description": "User feedback or testimonials",
       "type": "object",
       "properties": {
         "name": { "type": "string" },
-        "email": { "type": "string" },
-        "message": { "type": "string" },
+        "rating": { "type": "number" },
+        "comment": { "type": "string" },
         "createdAt": { "type": "string", "format": "date-time" }
       },
-      "required": ["name", "email", "message", "createdAt"]
+      "required": ["name", "rating", "comment", "createdAt"]
     }
   },
   "firestore": {
@@ -48,8 +70,12 @@
       "description": "List of services offered"
     },
     "messages": {
-      "schema": "Message",
-      "description": "Client inquiries"
+      "schema": "Order",
+      "description": "Project orders"
+    },
+    "feedback": {
+      "schema": "Feedback",
+      "description": "Client feedback"
     }
   }
 }

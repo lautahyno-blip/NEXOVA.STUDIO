@@ -51,11 +51,20 @@ service cloud.firestore {
         && data.order is number;
     }
 
-    function isValidMessage(data) {
-      return data.keys().hasAll(['name', 'email', 'message', 'createdAt'])
+    function isValidOrder(data) {
+      return data.keys().hasAll(['fullName', 'email', 'serviceType', 'projectTitle', 'projectDetails', 'createdAt'])
+        && data.fullName is string && data.fullName.size() <= 100
+        && data.email is string && data.email.size() <= 200
+        && data.projectTitle is string && data.projectTitle.size() <= 200
+        && data.projectDetails is string && data.projectDetails.size() <= 4000
+        && data.createdAt == request.time;
+    }
+
+    function isValidFeedback(data) {
+      return data.keys().hasAll(['name', 'rating', 'comment', 'createdAt'])
         && data.name is string && data.name.size() <= 100
-        && data.email is string && data.email.size() <= 200 && data.email.matches('^[^@]+@[^@]+\\.[^@]+$')
-        && data.message is string && data.message.size() <= 2000
+        && data.rating is number && data.rating >= 1 && data.rating <= 5
+        && data.comment is string && data.comment.size() <= 1000
         && data.createdAt == request.time;
     }
 
@@ -94,12 +103,21 @@ service cloud.firestore {
     }
 
     match /messages/{messageId} {
-      // Public can create messages
-      allow create: if isValidMessage(incoming()) && isValidId(messageId);
+      // Public can create orders
+      allow create: if isValidOrder(incoming()) && isValidId(messageId);
       // Only admin can read or delete messages
       allow get, list: if isAdmin();
       allow delete: if isAdmin();
-      allow update: if false; 
+      allow update: if isAdmin(); // Allow admin to update status/paymentStatus
+    }
+
+    match /feedback/{feedbackId} {
+      // Public can read and create feedback
+      allow read: if true;
+      allow create: if isValidFeedback(incoming()) && isValidId(feedbackId);
+      // Only admin can delete feedback
+      allow delete: if isAdmin();
+      allow update: if false;
     }
   }
 }

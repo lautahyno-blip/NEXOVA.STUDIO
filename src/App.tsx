@@ -33,6 +33,7 @@ import Portfolio from './components/Portfolio';
 import Contact from './components/Contact';
 import AdminPanel from './components/AdminPanel';
 import ServicePage from './components/ServicePage';
+import FeedbackSection from './components/FeedbackSection';
 
 // --- Types ---
 interface NavLinkProps {
@@ -132,6 +133,7 @@ const Navbar = () => {
               <NavLink href="#about">About</NavLink>
               <NavLink href="#services">Services</NavLink>
               <NavLink href="#portfolio">Portfolio</NavLink>
+              <NavLink href="#feedback">Feedback</NavLink>
               <NavLink href="#contact">Contact</NavLink>
             </>
           ) : (
@@ -180,6 +182,7 @@ const Navbar = () => {
                   <NavLink href="#about" onClick={() => setIsMobileMenuOpen(false)}>About</NavLink>
                   <NavLink href="#services" onClick={() => setIsMobileMenuOpen(false)}>Services</NavLink>
                   <NavLink href="#portfolio" onClick={() => setIsMobileMenuOpen(false)}>Portfolio</NavLink>
+                  <NavLink href="#feedback" onClick={() => setIsMobileMenuOpen(false)}>Feedback</NavLink>
                   <NavLink href="#contact" onClick={() => setIsMobileMenuOpen(false)}>Contact</NavLink>
                 </>
               ) : (
@@ -381,6 +384,10 @@ const Home = ({ config }: { config: any }) => {
         <Portfolio />
       </div>
     </section>
+
+    <div id="feedback">
+      <FeedbackSection />
+    </div>
 
     <Contact config={config} />
 

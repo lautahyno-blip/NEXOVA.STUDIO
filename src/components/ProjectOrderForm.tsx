@@ -20,12 +20,14 @@ import {
   Loader2,
   Sparkles,
   Shield,
-  X
+  X,
+  Globe
 } from 'lucide-react';
 import { collection, addDoc, serverTimestamp, query, where, getDocs } from 'firebase/firestore';
 import { db } from '../lib/firebase';
 import { notifyAdmin, sendAutoReply } from '../lib/email';
 import toast from 'react-hot-toast';
+import { motion, AnimatePresence } from 'motion/react';
 
 interface ProjectOrderFormProps {
   initialService?: string;
@@ -92,6 +94,8 @@ const ProjectOrderForm: React.FC<ProjectOrderFormProps> = ({ initialService, con
     }
   };
 
+  const [isSuccessModalOpen, setIsSuccessModalOpen] = useState(false);
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
@@ -119,34 +123,39 @@ const ProjectOrderForm: React.FC<ProjectOrderFormProps> = ({ initialService, con
       ]).catch(err => console.warn('Email notification failed but project saved:', err));
 
       setIsSuccess(true);
-      toast.success('Project request sent! Bukti pembayaran telah diterima.');
-      
-      // Reset after delay
-      setTimeout(() => {
-        setIsSuccess(false);
-        setFormData({
-          fullName: '',
-          email: '',
-          socialMedia: '',
-          serviceType: initialService || 'Canva Design',
-          projectTitle: '',
-          projectDetails: '',
-          budgetRange: '$5 - $20',
-          deadline: '',
-          referenceUrl: '',
-          preferredComm: 'Email',
-          agreement: false,
-          dpConfirmed: false,
-          paymentProof: null
-        });
-        setAvailableSlots(null);
-        setUploadProgress(0);
-      }, 5000);
+      setIsSuccessModalOpen(true);
+      toast.success('Project request sent!');
     } catch (e) {
+      console.error('Order error:', e);
       toast.error('Submission failed. Mohon coba lagi atau hubungi admin.');
     } finally {
       setIsSubmitting(false);
     }
+  };
+
+  const handleCloseSuccess = () => {
+    setIsSuccessModalOpen(false);
+    setIsSuccess(false);
+    setFormData({
+      fullName: '',
+      email: '',
+      socialMedia: '',
+      serviceType: initialService || 'Canva Design',
+      projectTitle: '',
+      projectDetails: '',
+      budgetRange: selectedBudget || 'Rp10.000',
+      deadline: '',
+      referenceUrl: '',
+      preferredComm: 'Email',
+      agreement: false,
+      dpConfirmed: false,
+      paymentProof: null
+    });
+    setAvailableSlots(null);
+    setUploadProgress(0);
+    // Scroll to top of form
+    const container = document.getElementById('contact');
+    if (container) container.scrollIntoView({ behavior: 'smooth' });
   };
 
   const copyToClipboard = () => {
@@ -643,6 +652,59 @@ const ProjectOrderForm: React.FC<ProjectOrderFormProps> = ({ initialService, con
           </div>
         </div>
       </form>
+      {/* Success Modal */}
+      <AnimatePresence>
+        {isSuccessModalOpen && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-[100] flex items-center justify-center px-6 bg-brand-dark/95 backdrop-blur-xl"
+          >
+            <motion.div
+              initial={{ scale: 0.9, y: 20 }}
+              animate={{ scale: 1, y: 0 }}
+              exit={{ scale: 0.9, y: 20 }}
+              className="glass max-w-xl w-full p-8 md:p-12 rounded-[40px] border border-brand-cyan/20 text-center relative overflow-hidden"
+            >
+              <div className="absolute top-0 left-1/2 -translate-x-1/2 w-40 h-40 bg-brand-cyan/10 blur-[80px] rounded-full" />
+              
+              <div className="relative z-10">
+                <div className="w-20 h-20 bg-brand-cyan/10 rounded-[28px] flex items-center justify-center mx-auto mb-8">
+                  <CheckCircle2 size={40} className="text-brand-cyan" />
+                </div>
+                
+                <h3 className="text-3xl font-bold mb-6 italic">Transmission Successful</h3>
+                
+                <div className="space-y-6 text-white/60 mb-10 text-sm leading-relaxed italic">
+                  <div className="p-6 bg-white/5 rounded-3xl border border-white/5">
+                    <div className="flex items-center gap-2 mb-2 text-brand-cyan">
+                      <Globe size={14} />
+                      <span className="text-[10px] font-black uppercase tracking-widest">English</span>
+                    </div>
+                    <p>“Thank you for choosing NEXOVA STUDIO. Your project request has been submitted successfully and will be reviewed as soon as possible.”</p>
+                  </div>
+                  
+                  <div className="p-6 bg-white/5 rounded-3xl border border-white/5">
+                    <div className="flex items-center gap-2 mb-2 text-brand-cyan">
+                      <Globe size={14} />
+                      <span className="text-[10px] font-black uppercase tracking-widest">Indonesia</span>
+                    </div>
+                    <p>“Terima kasih telah memilih NEXOVA STUDIO. Permintaan project Anda berhasil dikirim dan akan segera kami tinjau secepat mungkin.”</p>
+                  </div>
+                </div>
+
+                <button
+                  onClick={handleCloseSuccess}
+                  className="w-full py-5 bg-brand-cyan text-brand-dark rounded-full font-bold flex items-center justify-center gap-2 hover:bg-white transition-all shadow-[0_0_40px_rgba(0,255,255,0.2)]"
+                >
+                  Confirm & Close <CheckCircle2 size={18} />
+                </button>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 };
