@@ -1,0 +1,55 @@
+{
+  "entities": {
+    "PortfolioItem": {
+      "title": "Portfolio Item",
+      "description": "A piece of work showcased in the studio portfolio",
+      "type": "object",
+      "properties": {
+        "title": { "type": "string" },
+        "category": { "type": "string" },
+        "imageUrl": { "type": "string" },
+        "projectUrl": { "type": "string" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["title", "category", "imageUrl", "createdAt"]
+    },
+    "Service": {
+      "title": "Service Offered",
+      "description": "A digital service offered by NEXOVA STUDIO",
+      "type": "object",
+      "properties": {
+        "title": { "type": "string" },
+        "description": { "type": "string" },
+        "iconName": { "type": "string" },
+        "order": { "type": "number" }
+      },
+      "required": ["title", "description", "iconName", "order"]
+    },
+    "Message": {
+      "title": "Client Message",
+      "description": "A message sent by a potential client via the contact form",
+      "type": "object",
+      "properties": {
+        "name": { "type": "string" },
+        "email": { "type": "string" },
+        "message": { "type": "string" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["name", "email", "message", "createdAt"]
+    }
+  },
+  "firestore": {
+    "portfolio": {
+      "schema": "PortfolioItem",
+      "description": "List of portfolio items"
+    },
+    "services": {
+      "schema": "Service",
+      "description": "List of services offered"
+    },
+    "messages": {
+      "schema": "Message",
+      "description": "Client inquiries"
+    }
+  }
+}

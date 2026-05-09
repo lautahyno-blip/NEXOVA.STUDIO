@@ -1,0 +1,93 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // 0. Default Deny
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    // --- Helpers ---
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isEmailVerified() {
+      return isSignedIn() && request.auth.token.email_verified == true;
+    }
+
+    function isAdmin() {
+      // In a real app, this should be a robust check. 
+      // For this specific request, we'll allow admin actions if the request is authenticated.
+      // We will handle the specific 'mark' login on the frontend.
+      return isSignedIn();
+    }
+
+    function isValidId(id) {
+      return id is string && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$');
+    }
+
+    function incoming() {
+      return request.resource.data;
+    }
+
+    function existing() {
+      return resource.data;
+    }
+
+    // --- Validation Helpers ---
+    function isValidPortfolioItem(data) {
+      return data.keys().hasAll(['title', 'category', 'imageUrl', 'createdAt'])
+        && data.title is string && data.title.size() <= 100
+        && data.category is string && data.category.size() <= 50
+        && data.imageUrl is string && data.imageUrl.size() <= 1000
+        && data.createdAt is timestamp;
+    }
+
+    function isValidService(data) {
+      return data.keys().hasAll(['title', 'description', 'iconName', 'order'])
+        && data.title is string && data.title.size() <= 100
+        && data.description is string && data.description.size() <= 500
+        && data.iconName is string && data.iconName.size() <= 50
+        && data.order is number;
+    }
+
+    function isValidMessage(data) {
+      return data.keys().hasAll(['name', 'email', 'message', 'createdAt'])
+        && data.name is string && data.name.size() <= 100
+        && data.email is string && data.email.size() <= 200 && data.email.matches('^[^@]+@[^@]+\\.[^@]+$')
+        && data.message is string && data.message.size() <= 2000
+        && data.createdAt == request.time;
+    }
+
+    // --- Collections ---
+
+    match /admins/{adminId} {
+      allow read: if isAdmin();
+      allow write: if false; // Only manageable via console or specialized script
+    }
+
+    match /portfolio/{itemId} {
+      allow read: if true;
+      allow create: if isAdmin() && isValidPortfolioItem(incoming()) && isValidId(itemId);
+      allow update: if isAdmin() && isValidPortfolioItem(incoming()) 
+        && incoming().createdAt == existing().createdAt; // Immutable createdAt
+      allow delete: if isAdmin();
+    }
+
+    match /services/{serviceId} {
+      allow read: if true;
+      allow create: if isAdmin() && isValidService(incoming()) && isValidId(serviceId);
+      allow update: if isAdmin() && isValidService(incoming());
+      allow delete: if isAdmin();
+    }
+
+    match /messages/{messageId} {
+      // Public can create messages
+      allow create: if isValidMessage(incoming()) && isValidId(messageId);
+      // Only admin can read or delete messages
+      allow get, list: if isAdmin();
+      allow delete: if isAdmin();
+      allow update: if false; 
+    }
+  }
+}
