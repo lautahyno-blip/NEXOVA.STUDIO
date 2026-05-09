@@ -32,7 +32,8 @@ import {
   Sparkles,
   Link as LinkIcon,
   CreditCard,
-  FileText
+  FileText,
+  Star
 } from 'lucide-react';
 import { 
   collection, 
@@ -53,7 +54,7 @@ const AdminPanel: React.FC = () => {
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const { isAdmin, login, logout, loading: authLoading } = useAuth();
-  const [activeTab, setActiveTab] = useState<'portfolio' | 'messages' | 'site' | 'settings'>('portfolio');
+  const [activeTab, setActiveTab] = useState<'portfolio' | 'messages' | 'site' | 'settings' | 'feedback'>('portfolio');
   const [activeSettingTab, setActiveSettingTab] = useState<'profile' | 'account' | 'website' | 'socials' | 'notifications' | 'seo' | 'appearance' | 'advanced'>('profile');
   const [isAddingProject, setIsAddingProject] = useState(false);
   const [messages, setMessages] = useState<any[]>([]);
@@ -365,8 +366,8 @@ const AdminPanel: React.FC = () => {
             )}
           </button>
           <button 
-            onClick={() => setActiveTab('feedback' as any)}
-            className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all ${activeTab === ('feedback' as any) ? 'bg-brand-cyan text-brand-dark' : 'hover:bg-white/5 text-white/60'}`}
+            onClick={() => setActiveTab('feedback')}
+            className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all ${activeTab === 'feedback' ? 'bg-brand-cyan text-brand-dark' : 'hover:bg-white/5 text-white/60'}`}
           >
             <Star size={20} /> Feedback
           </button>
@@ -423,39 +424,200 @@ const AdminPanel: React.FC = () => {
 
             {activeTab === 'messages' && (
               <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }}>
-                {/* ... existing messages content ... */}
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-8">
+                  <h3 className="text-2xl font-bold italic">Project Commissions</h3>
+                  <div className="flex gap-2 p-1 glass border-white/5 rounded-xl">
+                    {(['all', 'pending', 'accepted', 'rejected'] as const).map(status => (
+                      <button 
+                        key={status}
+                        onClick={() => setFilterStatus(status)}
+                        className={`px-3 py-1.5 rounded-lg text-[10px] font-bold uppercase tracking-widest transition-all ${filterStatus === status ? 'bg-brand-cyan text-brand-dark shadow-[0_0_15px_rgba(0,255,255,0.3)]' : 'text-white/40 hover:text-white'}`}
+                      >
+                        {status}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+                
+                <div className="space-y-6">
+                  {messages.filter(m => filterStatus === 'all' || m.status === filterStatus).length === 0 ? (
+                    <div className="glass p-12 rounded-3xl border-dashed border-white/10 text-center">
+                      <p className="text-white/20 italic">No {filterStatus !== 'all' ? filterStatus : ''} project requests found.</p>
+                    </div>
+                  ) : (
+                    messages
+                      .filter(m => filterStatus === 'all' || m.status === filterStatus)
+                      .map(msg => (
+                      <div key={msg.id} className={`glass p-8 rounded-3xl border-white/5 transition-all ${msg.status === 'accepted' ? 'border-brand-cyan/20 bg-brand-cyan/5' : msg.status === 'rejected' ? 'opacity-50 grayscale' : ''}`}>
+                        <div className="flex flex-col md:flex-row justify-between mb-8 gap-4">
+                          <div className="flex-1">
+                            <div className="flex items-center gap-3 mb-2">
+                              <p className="font-bold text-xl italic">{msg.fullName || 'Anonymous Principal'}</p>
+                              {msg.status && (
+                                <span className={`text-[10px] uppercase font-black tracking-widest px-3 py-1 rounded-full ${msg.status === 'accepted' ? 'bg-brand-cyan/20 text-brand-cyan' : msg.status === 'rejected' ? 'bg-red-500/20 text-red-400' : 'bg-white/10 text-white/40'}`}>
+                                  {msg.status}
+                                </span>
+                              )}
+                            </div>
+                            <p className="text-sm text-brand-cyan font-mono flex items-center gap-2">
+                              <Mail size={12} /> {msg.email}
+                            </p>
+                            {msg.socialMedia && (
+                              <p className="text-[10px] text-white/30 uppercase mt-2 font-bold">
+                                Signal ID: <span className="text-white/80">{msg.socialMedia}</span>
+                              </p>
+                            )}
+                          </div>
+                          <div className="flex gap-2">
+                             <button 
+                               onClick={() => handleUpdateMessageStatus(msg, 'accepted')}
+                               className={`p-4 rounded-2xl transition-all ${msg.status === 'accepted' ? 'bg-brand-cyan text-brand-dark shadow-[0_0_20px_rgba(0,255,255,0.3)]' : 'bg-white/5 text-brand-cyan hover:bg-brand-cyan/10'}`}
+                               title="Authorize Acceptance"
+                             >
+                                <CheckCircle2 size={24} />
+                             </button>
+                             <button 
+                               onClick={() => handleUpdateMessageStatus(msg, 'rejected')}
+                               className={`p-4 rounded-2xl transition-all ${msg.status === 'rejected' ? 'bg-red-500 text-white shadow-[0_0_20px_rgba(239,68,68,0.3)]' : 'bg-white/5 text-red-400 hover:bg-red-500/10'}`}
+                               title="Divert / Reject"
+                             >
+                                <X size={24} />
+                             </button>
+                             <button onClick={() => handleDeleteMessage(msg.id)} className="p-4 rounded-2xl bg-white/5 text-white/20 hover:text-red-500 transition-colors">
+                                <Trash size={24} />
+                             </button>
+                          </div>
+                        </div>
+
+                        <div className="grid md:grid-cols-2 gap-8 pt-8 border-t border-white/5">
+                          <div className="space-y-6">
+                            <div>
+                               <label className="text-[10px] uppercase font-black tracking-[0.2em] text-white/20 mb-2 block">Mission Objective</label>
+                               <p className="text-brand-cyan font-bold text-lg italic">{msg.projectTitle || 'Standard Engagement'}</p>
+                            </div>
+                            <div className="p-6 bg-white/2 rounded-3xl text-sm text-white/60 leading-relaxed italic border border-white/5 min-h-[120px]">
+                               {msg.projectDetails || 'No auxiliary details provided.'}
+                            </div>
+                          </div>
+                          
+                          <div className="grid grid-cols-2 gap-4">
+                            {[
+                              { label: 'Service Class', value: msg.serviceType, color: 'text-white' },
+                              { label: 'Project Budget', value: msg.budgetRange, color: 'text-brand-cyan' },
+                              { label: 'Timeline', value: msg.deadline || 'Mission Critical', color: 'text-white' },
+                              { label: 'Preferred Comm', value: msg.preferredComm, color: 'text-white' }
+                            ].map((spec, i) => (
+                              <div key={i} className="glass p-4 rounded-2xl border-white/5 text-center">
+                                 <label className="text-[9px] uppercase font-black tracking-widest text-white/20 mb-1 block">{spec.label}</label>
+                                 <p className={`text-xs font-bold ${spec.color}`}>{spec.value}</p>
+                              </div>
+                            ))}
+                          </div>
+                          
+                          {/* Payment Evidence Section */}
+                          {msg.paymentProof && (
+                             <div className="md:col-span-2 space-y-6 pt-8 border-t border-white/5">
+                               <div className="flex items-center justify-between">
+                                 <h5 className="text-[10px] uppercase font-black tracking-[0.3em] text-brand-cyan flex items-center gap-3">
+                                   <CreditCard size={14} /> Financial Evidence
+                                 </h5>
+                                 <div className="flex gap-2">
+                                   <button 
+                                     onClick={() => handleUpdatePaymentStatus(msg.id, 'valid')}
+                                     className={`px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-tighter transition-all ${msg.paymentStatus === 'valid' ? 'bg-green-500 text-white shadow-[0_0_20px_rgba(34,197,94,0.4)]' : 'bg-white/5 text-green-400 border border-green-500/20 hover:bg-green-500/10'}`}
+                                   >
+                                     Verify Payment
+                                   </button>
+                                   <button 
+                                     onClick={() => handleUpdatePaymentStatus(msg.id, 'invalid')}
+                                     className={`px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-tighter transition-all ${msg.paymentStatus === 'invalid' ? 'bg-red-500 text-white shadow-[0_0_20px_rgba(239,68,68,0.4)]' : 'bg-white/5 text-red-400 border border-red-500/20 hover:bg-red-500/10'}`}
+                                   >
+                                     Flag Fraud
+                                   </button>
+                                 </div>
+                               </div>
+                               
+                               <div className="relative group/payment overflow-hidden rounded-[32px] glass border-white/10 max-w-sm ml-0">
+                                 {msg.paymentProof.startsWith('data:application/pdf') || msg.paymentProof.includes('.pdf') ? (
+                                   <div className="p-12 flex flex-col items-center gap-4 text-white/40">
+                                     <div className="w-20 h-20 bg-white/5 rounded-3xl flex items-center justify-center">
+                                       <FileText size={40} className="text-brand-cyan/40" />
+                                     </div>
+                                     <p className="text-[10px] font-black uppercase tracking-widest">Document: PDF Matrix</p>
+                                     <a href={msg.paymentProof} target="_blank" rel="noopener noreferrer" className="px-6 py-3 bg-brand-cyan text-brand-dark rounded-full text-xs font-bold hover:bg-white transition-all">Download Evidence</a>
+                                   </div>
+                                 ) : (
+                                   <div className="relative aspect-auto">
+                                     <img src={msg.paymentProof} alt="Payment Proof" className="w-full h-auto object-contain hover:scale-105 transition-transform duration-700 cursor-zoom-in" onClick={() => window.open(msg.paymentProof, '_blank')} />
+                                     <div className="absolute inset-0 bg-brand-dark/60 opacity-0 group-hover/payment:opacity-100 transition-opacity flex items-center justify-center pointer-events-none">
+                                        <div className="flex flex-col items-center gap-3">
+                                          <Search size={32} className="text-brand-cyan" />
+                                          <span className="text-[10px] font-black text-white uppercase tracking-[0.3em]">Expand Signal</span>
+                                        </div>
+                                     </div>
+                                   </div>
+                                 )}
+                               </div>
+                             </div>
+                          )}
+                          
+                          {msg.referenceUrl && (
+                            <div className="md:col-span-2 pt-4">
+                              <a 
+                                href={msg.referenceUrl} 
+                                target="_blank" 
+                                rel="noopener noreferrer"
+                                className="inline-flex items-center gap-3 p-4 glass border-brand-cyan/20 rounded-2xl text-[10px] uppercase font-black tracking-widest text-brand-cyan hover:text-white hover:border-white/20 transition-all"
+                              >
+                                <ExternalLink size={14} /> Open External Reference / Brief Links
+                              </a>
+                            </div>
+                          )}
+                        </div>
+                        <div className="mt-8 pt-6 border-t border-white/2 text-[10px] text-white/10 uppercase tracking-[0.3em] font-mono font-black text-right">
+                           Transmission Recv: {msg.createdAt?.toDate().toLocaleString()}
+                        </div>
+                      </div>
+                    ))
+                  )}
+                </div>
               </motion.div>
             )}
  
-            {activeTab === ('feedback' as any) && (
+            {activeTab === 'feedback' && (
               <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }}>
                 <div className="flex items-center justify-between mb-8">
-                  <h3 className="text-2xl font-bold">Client Feedback Management</h3>
+                  <h3 className="text-2xl font-bold italic">Client Echoes</h3>
                 </div>
                 <div className="space-y-4">
                   {feedbacks.length === 0 ? (
                     <div className="glass p-12 rounded-3xl border-dashed border-white/10 text-center">
-                      <p className="text-white/20 italic">No feedback messages found.</p>
+                      <p className="text-white/20 italic uppercase tracking-widest text-xs">No feedback signals received.</p>
                     </div>
                   ) : (
                     feedbacks.map(f => (
-                      <div key={f.id} className="glass p-6 rounded-2xl border-white/5 flex justify-between items-start">
-                        <div>
-                          <div className="flex items-center gap-3 mb-2">
-                            <p className="font-bold">{f.name}</p>
-                            <div className="flex gap-0.5">
-                              {[...Array(5)].map((_, i) => (
-                                <Star key={i} size={10} className={i < f.rating ? "text-brand-cyan fill-brand-cyan" : "text-white/10"} />
-                              ))}
+                      <div key={f.id} className="glass p-8 rounded-3xl border-white/5 flex justify-between items-start hover:border-brand-cyan/20 transition-all">
+                        <div className="flex-1">
+                          <div className="flex items-center gap-4 mb-3">
+                            <div className="w-10 h-10 rounded-xl bg-white/5 flex items-center justify-center text-white/20">
+                              <User size={20} />
+                            </div>
+                            <div>
+                               <p className="font-bold text-lg italic">{f.name}</p>
+                               <div className="flex gap-0.5">
+                                 {[...Array(5)].map((_, i) => (
+                                   <Star key={i} size={10} className={i < f.rating ? "text-brand-cyan fill-brand-cyan" : "text-white/10"} />
+                                 ))}
+                               </div>
                             </div>
                           </div>
-                          <p className="text-white/60 text-sm italic">"{f.comment}"</p>
-                          <p className="text-[9px] text-white/20 uppercase font-mono mt-4">
-                            Received: {f.createdAt?.toDate().toLocaleString()}
+                          <p className="text-white/60 text-sm italic leading-relaxed">"{f.comment}"</p>
+                          <p className="text-[9px] text-white/20 uppercase font-mono mt-6 tracking-widest">
+                            Sync Date: {f.createdAt?.toDate().toLocaleString()}
                           </p>
                         </div>
-                        <button onClick={() => handleDeleteFeedback(f.id)} className="p-2 text-white/20 hover:text-red-500 transition-colors">
-                          <Trash size={18} />
+                        <button onClick={() => handleDeleteFeedback(f.id)} className="p-3 rounded-xl bg-white/2 text-white/20 hover:text-red-500 hover:bg-red-500/10 transition-all">
+                          <Trash size={20} />
                         </button>
                       </div>
                     ))
